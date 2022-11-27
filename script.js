@@ -1,3 +1,5 @@
+let ipName = document.getElementById('name');
+
 const canvas = document.getElementById("myCanvas");
 const ctx = canvas.getContext("2d");    //Có nhiều hàm dùng để vẽ hình hộp, hình tròn hay chữ ...
 
@@ -21,10 +23,14 @@ let paddleX = (canvas.width - paddleWidth) / 2; //Điểm bắt đầu.
 let rightPressed = false;
 let leftPressed = false;
 
+//Điểm
+let score = 0;
+
 /****************************************************Xử lý sự kiện******************************************************************** */
 //Lắng nghe sự kiện phím nhấn
 document.addEventListener("keydown", keyDownHandler, false);
 document.addEventListener("keyup", keyUpHandler, false);
+document.addEventListener("mousemove", mouseMoveHandler, false);
 
 function keyDownHandler(e) {
     if (e.key === "Right" || e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
@@ -40,6 +46,26 @@ function keyUpHandler(e) {
     } else if (e.key === "Left" || e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
         leftPressed = false;
     }
+}
+
+function mouseMoveHandler(e) {
+    let relativeX = e.clientX - canvas.offsetLeft;
+    if (relativeX > 0 && relativeX < canvas.width) {
+        paddleX = relativeX - paddleWidth / 2;
+    }
+}
+
+
+/*Hiển thị*/
+function drawScore() {
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#DC3535";
+    ctx.fillText(`Score: ${score}`, 8, 20);
+}
+function drawPlayerName() {
+    ctx.font = "20px Arial";
+    ctx.fillStyle = "#143F6B";
+    ctx.fillText(`Player: ${ipName.value}`, canvas.width - 130, 20);
 }
 
 /*---------------------------------------------------OOP-----------------------------------------------------------------------*/
@@ -100,6 +126,13 @@ let Bar = function (widthBar, xBar) {
     this.xBar = xBar;
     this.yBar = canvas.height - paddleHeight;
 
+    this.moveLeft = function () {
+        paddleX -= 7;
+    };
+
+    this.moveRight = function () {
+        paddleX += 7;
+    };
 
     this.move = function () {
         if (rightPressed && paddleX < canvas.width - paddleWidth) {
@@ -109,14 +142,6 @@ let Bar = function (widthBar, xBar) {
         }
     };
 
-    this.moveLeft = function () {
-        paddleX -= 7;
-    };
-
-    this.moveRight = function () {
-        paddleX += 7;
-    };
-
     this.drawPaddle = function () {
         ctx.beginPath();
         ctx.rect(paddleX, this.yBar, this.widthBar, this.heightBar);
@@ -124,6 +149,39 @@ let Bar = function (widthBar, xBar) {
         ctx.fill();
         ctx.closePath();
     }
+}
+
+let GameBoard = function (width, height) {
+    this.width = width;
+    this.height = height;
+
+    this.drawGameBoard = function (canvas) {
+        canvas.setAttribute("width", this.width);
+        canvas.setAttribute("height", this.height);
+        x = canvas.width / 2;
+        y = canvas.height - BALL_RADIAN;
+
+        for (let c = 0; c < gameBoardColumnCount; c++) {
+            gameBoardCells[c] = [];
+            for (let r = 0; r < gameBoardRowCount; r++) {
+                gameBoardCells[c][r] = { x: 0, y: 0, status: 1 };
+            }
+        }
+    };
+
+    this.handleCollision = function () {
+        for (let c = 0; c < gameBoardColumnCount; c++) {
+            for (let r = 0; r < gameBoardRowCount; r++) {
+                const b = gameBoardCells[c][r];
+                if (b.status == 1) {
+                    if (y < b.y) {
+                        dy = -dy;
+                        b.status = 0;
+                    }
+                }
+            }
+        }
+    };
 }
 
 
@@ -139,10 +197,12 @@ function drawGame() {
     ball.changeDirection();
 
     /*Thanh Bar*/
-    let bar = new Bar(paddleX, paddleWidth);
-    bar.drawPaddle();
+    let bar = new Bar(paddleWidth, 200);
+    bar.drawPaddle(paddleX);
     bar.move();
 
+    drawScore();
+    drawPlayerName();
 }
 
 const interval = setInterval(drawGame, 30); //Sau 10s sẽ cập nhật lại bản vẽ
@@ -172,5 +232,5 @@ const interval = setInterval(drawGame, 30); //Sau 10s sẽ cập nhật lại b�
 
 
 
-let GameBoard = function (width, height) { }
+
 
